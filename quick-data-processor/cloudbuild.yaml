@@ -24,7 +24,8 @@ steps:
 
 # Define logging options
 options:
-  logs_bucket: 'gs://serveless_logs'  # Ensure this bucket exists
+  logging: 'CLOUD_LOGGING_ONLY'  # Use Cloud Logging only
+
 
 # Define which image will be produced from the build
 images:
