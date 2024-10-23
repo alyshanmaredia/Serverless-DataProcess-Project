@@ -22,6 +22,10 @@ steps:
       - 'us-central1'  # Set to your preferred region
       - '--allow-unauthenticated'
 
+# Define logging options
+options:
+  logs_bucket: 'gs://YOUR_BUCKET_NAME'  # Specify your logs bucket here
+
 # Define which image will be produced from the build
 images:
   - 'gcr.io/$PROJECT_ID/serverless/frontend02:$COMMIT_SHA'
