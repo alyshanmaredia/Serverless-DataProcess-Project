@@ -24,7 +24,7 @@ steps:
 
 # Define logging options
 options:
-  logs_bucket: 'gs://YOUR_BUCKET_NAME'  # Specify your logs bucket here
+  logs_bucket: 'gs://serveless_logs'  # Specify your logs bucket here
 
 # Define which image will be produced from the build
 images:
