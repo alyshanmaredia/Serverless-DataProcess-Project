@@ -1,3 +1,6 @@
+options:
+  logging: CLOUD_LOGGING_ONLY  # Use Cloud Logging only for build logs
+
 steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
@@ -13,23 +16,17 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'frontend-service'               # Name of the Cloud Run service
+      - 'frontend-service'
       - '--image'
-      - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'  # The image just built and pushed
+      - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
       - '--platform'
       - 'managed'
       - '--region'
-      - 'REGION'                         # Replace with your region, e.g., 'us-central1'
-      - '--allow-unauthenticated'        # Allows public access; remove this if private access is required
+      - 'REGION'
+      - '--allow-unauthenticated'
 
 images:
   - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
-
-
-
-
-
-
 
 
 
