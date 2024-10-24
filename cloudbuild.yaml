@@ -1,27 +1,29 @@
+options:
+  logging: NONE  #  Disable logging entirely
+
 steps:
   # Step 1: Build the Docker image
-  - name: 'serverless/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/serverless/frontend02:$COMMIT_SHA', '.']
-
-  # Step 2: Push the Docker image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/serverless/frontend02:$COMMIT_SHA']
-
-  # Step 3: Deploy the Docker image to Cloud Run
+    args: ['build', '-t', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest', '.']
+  
+  # Step 2: Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest']
+  
+  # Step 3: Deploy the image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
       - 'run'
       - 'deploy'
-      - 'frontend02'  # Name of the Cloud Run service
+      - 'frontend-service'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/serverless/frontend02:$COMMIT_SHA'
+      - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
       - '--platform'
       - 'managed'
       - '--region'
-      - 'us-central1'  # Set to your preferred region
+      - 'REGION'
       - '--allow-unauthenticated'
 
-# Define which image will be produced from the build
 images:
-  - 'gcr.io/$PROJECT_ID/serverless/frontend02:$COMMIT_SHA'
+  - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
