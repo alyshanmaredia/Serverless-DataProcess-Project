@@ -4,11 +4,11 @@ options:
 steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:latest', '.']
   
   # Step 2: Push the image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest']
+    args: ['push', 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:latest']
   
   # Step 3: Deploy the image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -18,12 +18,45 @@ steps:
       - 'deploy'
       - 'frontend-service'
       - '--image'
-      - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
+      - 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:latest'
       - '--platform'
       - 'managed'
       - '--region'
-      - 'REGION'
+      - 'us-central1'
       - '--allow-unauthenticated'
 
 images:
-  - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
+  - 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:latest'
+
+
+
+
+# options:
+#   logging: CLOUD_LOGGING_ONLY  # Use Cloud Logging only for build logs
+
+# steps:
+#   # Step 1: Build the Docker image
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest', '.']
+  
+#   # Step 2: Push the image to Artifact Registry
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest']
+  
+#   # Step 3: Deploy the image to Cloud Run
+#   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#     entrypoint: 'gcloud'
+#     args:
+#       - 'run'
+#       - 'deploy'
+#       - 'frontend-service'
+#       - '--image'
+#       - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
+#       - '--platform'
+#       - 'managed'
+#       - '--region'
+#       - 'REGION'
+#       - '--allow-unauthenticated'
+
+# images:
+#   - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
