@@ -1,5 +1,5 @@
 options:
-  logging: NONE  #  Disable logging entirely
+  logging: CLOUD_LOGGING_ONLY  # Use Cloud Logging only for build logs
 
 steps:
   # Step 1: Build the Docker image
