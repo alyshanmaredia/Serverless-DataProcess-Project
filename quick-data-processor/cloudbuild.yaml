@@ -1,44 +1,29 @@
 steps:
-# Step 1: Docker Build
-# - Create a docker image from Github Repository
-# - Create 2 tags for the same docker image. Commit ID and Latest.
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', '${_IMAGE_NAME}', '-t', '${_IMAGE_NAME}:latest', '.']
-
-# Step 2: Docker Push
-# - Push image to GCP Artifact Registry
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', '--all-tags', '${_IMAGE_NAME}']
-
-  # Step 3: Deploy the Docker image to Cloud Run
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest', '.']
+  
+  # Step 2: Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest']
+  
+  # Step 3: Deploy the image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
       - 'run'
       - 'deploy'
-      - 'frontend02'  # Name of the Cloud Run service
+      - 'frontend-service'               # Name of the Cloud Run service
       - '--image'
-      - 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:$COMMIT_SHA'
+      - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'  # The image just built and pushed
       - '--platform'
       - 'managed'
       - '--region'
-      - 'us-central1'  # Set to your preferred region
-      - '--allow-unauthenticated'
+      - 'REGION'                         # Replace with your region, e.g., 'us-central1'
+      - '--allow-unauthenticated'        # Allows public access; remove this if private access is required
 
-substitutions:
-  _IMAGE_NAME: 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:$COMMIT_SHA'
-
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-
-
-
-
-
-
-
-
+images:
+  - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
 
 
 
