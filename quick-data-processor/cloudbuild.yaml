@@ -1,5 +1,5 @@
 options:
-  logging: CLOUD_LOGGING_ONLY  # Use Cloud Logging only for build logs
+  logging: NONE  # Disable logging entirely
 
 steps:
   # Step 1: Build the Docker image
@@ -27,37 +27,3 @@ steps:
 
 images:
   - 'REGION-docker.pkg.dev/$PROJECT_ID/serveless/frontend02:latest'
-
-
-
-# steps:
-#   # Step 1: Build the Docker image
-#   - name: 'serverless/cloud-builders/docker'
-#     args: ['build', '-t', 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:$COMMIT_SHA', '.']
-
-#   # Step 2: Push the Docker image to the Container Registry
-#   - name: 'gcr.io/cloud-builders/docker'
-#     args: ['push', 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:$COMMIT_SHA']
-
-#   # Step 3: Deploy the Docker image to Cloud Run
-#   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-#     entrypoint: 'gcloud'
-#     args:
-#       - 'run'
-#       - 'deploy'
-#       - 'frontend02'  # Name of the Cloud Run service
-#       - '--image'
-#       - 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:$COMMIT_SHA'
-#       - '--platform'
-#       - 'managed'
-#       - '--region'
-#       - 'us-central1'  # Set to your preferred region
-#       - '--allow-unauthenticated'
-
-# # Define logging options
-# options:
-#   logging: 'CLOUD_LOGGING_ONLY'  # Use Cloud Logging only
-
-# # Define which image will be produced from the build
-# images:
-#   - 'us-central1-docker.pkg.dev/qdpserveless/serverless/frontend02:$COMMIT_SHA'
