@@ -1,29 +1,55 @@
-# Use a Node 16 base image
+# Use Node 16 base image
 FROM node:16-alpine
 
-# Set the working directory to /app inside the container
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json from the frontend directory
+# Copy package.json and package-lock.json for dependency installation
 COPY frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
-# Copy all the app files from frontend directory to the working directory
+# Copy the rest of the frontend files into the container
 COPY frontend/ ./
 
-# Build the app
+# Build the app (includes Tailwind, Flowbite, and Axios)
 RUN npm run build
 
-# Set the environment to production
-ENV NODE_ENV production
-
-# Expose the port on which the app will run
+# Expose the necessary port (default 3000 for serve)
 EXPOSE 3000
 
-# Start the app using the "serve" tool to serve the production build
+# Start the app
 CMD ["npx", "serve", "build"]
+
+
+
+# # Use a Node 16 base image
+# FROM node:16-alpine
+
+# # Set the working directory to /app inside the container
+# WORKDIR /app
+
+# # Copy package.json and package-lock.json from the frontend directory
+# COPY frontend/package*.json ./
+
+# # Install dependencies
+# RUN npm ci
+
+# # Copy all the app files from frontend directory to the working directory
+# COPY frontend/ ./
+
+# # Build the app
+# RUN npm run build
+
+# # Set the environment to production
+# ENV NODE_ENV production
+
+# # Expose the port on which the app will run
+# EXPOSE 3000
+
+# # Start the app using the "serve" tool to serve the production build
+# CMD ["npx", "serve", "build"]
 
 
 # # ==== CONFIGURE =====
