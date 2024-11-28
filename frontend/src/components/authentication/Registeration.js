@@ -6,6 +6,8 @@ import { CognitoUser } from "amazon-cognito-identity-js";
 import { LOGIN } from "../../utility/Constants";
 import axios from "axios";
 import hashAnswer from "../../utility/Hashing";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../utility/firebase";
 
 export default function Registration() {
 	const [fullName, setFullName] = useState("");
@@ -32,6 +34,10 @@ export default function Registration() {
 	const addSecurityQAUrl =
 		process.env.REACT_APP_LAMBDA_STORE_SECURITY_QA ||
 		"https://yf2xrervd3urtlskq52kof2u4u0ntzxt.lambda-url.us-east-1.on.aws/";
+
+	const SNSNotificationLambdaUrl =
+		process.env.REACT_APP_LAMBDA_SNS_NOTIFICATION ||
+		"https://lfgb5dgzov6unjdy3wawma72pa0ukmhi.lambda-url.us-east-1.on.aws/";
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -65,6 +71,46 @@ export default function Registration() {
 				}
 			}
 		);
+	};
+
+	const storeRegistrationLogs = async (email) => {
+		const now = new Date();
+		const SignUpDetails = {
+			email,
+			type,
+			fullName,
+			day: now.getDate(),
+			month: now.getMonth() + 1,
+			year: now.getFullYear(),
+			timestamp: now.toISOString(),
+		};
+
+		try {
+			await setDoc(
+				doc(db, "signup_logs", `${email}-${now.getTime()}`),
+				SignUpDetails
+			);
+			console.log("Signup Logs stored successfully.");
+		} catch (error) {
+			console.error("Error storing sign up logs: ", error);
+		}
+	};
+
+	const triggerSNSNotification = async (email) => {
+		try {
+			const response = await axios.post(SNSNotificationLambdaUrl, {
+				email: email,
+				eventType: "Registration",
+			});
+
+			if (response.status === 200 && response.data.matched === true) {
+				setSuccessMessage(
+					"Successfully sent a SNS Notification on User Login."
+				);
+			}
+		} catch (err) {
+			setError("Error sending a SNS Notification on user login action.");
+		}
 	};
 
 	const handleVerificationSubmit = async (e) => {
@@ -121,6 +167,8 @@ export default function Registration() {
 				username: email,
 				securityQuestions: questionsWithHashedAnswers,
 			});
+			await triggerSNSNotification(email);
+			await storeRegistrationLogs(email);
 			setSuccessMessage("Security questions saved successfully!");
 			setTimeout(() => {
 				navigate(LOGIN);
