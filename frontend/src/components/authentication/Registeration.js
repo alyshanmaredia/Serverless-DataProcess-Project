@@ -58,6 +58,7 @@ export default function Registration() {
 			[
 				{ Name: "custom:fullname", Value: fullName },
 				{ Name: "custom:usertype", Value: type },
+				{ Name: "custom:status", Value: "unassigned" },
 			],
 			null,
 			(err, result) => {

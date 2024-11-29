@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
 	const location = useLocation();
+	const navigate = useNavigate();
 	const [fullname, setFullname] = useState(null);
+	const [isAdmin, setIsAdmin] = useState(false);
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const { isAuthenticated, logout } = useAuth();
 
@@ -15,6 +18,9 @@ const Navbar = () => {
 			try {
 				const decoded = jwtDecode(token);
 				setFullname(decoded["custom:fullname"]);
+				if (decoded["custom:usertype"] === "QDPAgents") {
+					setIsAdmin(true);
+				}
 			} catch (error) {
 				console.error("Invalid token", error);
 			}
@@ -22,6 +28,10 @@ const Navbar = () => {
 	}, []);
 
 	const isLoginPage = location.pathname === "/login";
+
+	const goToDashboard = () => {
+		navigate("/dashboard");
+	};
 
 	return (
 		<nav className='bg-cyan-600 text-white shadow-lg'>
@@ -58,9 +68,16 @@ const Navbar = () => {
 									/>
 								</svg>
 							</button>
-							{/* Dropdown Menu */}
 							{isMenuOpen && (
 								<div className='absolute right-0 mt-2 w-48 bg-cyan-700 text-white rounded shadow-lg z-10'>
+									{isAdmin === true && (
+										<button
+											className='block w-full text-left px-4 py-2 hover:bg-cyan-600 transition'
+											onClick={goToDashboard}
+										>
+											Dashboard
+										</button>
+									)}
 									<button
 										className='block w-full text-left px-4 py-2 hover:bg-cyan-600 transition'
 										onClick={logout}

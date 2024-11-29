@@ -99,7 +99,7 @@ export default function Login() {
 				login(tempToken);
 				await storeLoginLogs(email);
 				await triggerSNSNotification(email);
-				navigate("/dashboard");
+				navigate("/home");
 			} else {
 				setError("Math question answer is incorrect. Please try again.");
 			}
