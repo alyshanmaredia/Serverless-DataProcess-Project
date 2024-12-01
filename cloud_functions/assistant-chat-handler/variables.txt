@@ -1,0 +1,4 @@
+DIALOGFLOW_URL
+https://us-central1-serverless-439419.cloudfunctions.net/dialogflow-handler
+FIRESTORE_URL
+https://us-central1-serverless-439419.cloudfunctions.net/store-assistant-chat

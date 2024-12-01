@@ -1,0 +1,4 @@
+PROJECT_ID
+serverless-439419
+DATABASE_ID
+chat-data
