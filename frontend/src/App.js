@@ -16,6 +16,8 @@ import ProtectedRoute from "./utility/RouteProtection";
 import Assistant from "./components/assistant/Assistant";
 import FeedbackForm from "./components/feedback/FeedbackForm";
 import FeedbackTable from "./components/feedback/ViewFeedbacks";
+import DataProcessor1 from "./components/dataProcessors/DataProcessor1";
+import DataProcessor2 from "./components/dataProcessors/DataProcessor2";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -55,6 +57,8 @@ const App = () => {
                   path="/dashboard"
                   element={<ProtectedRoute element={<Dashboard />} />}
                 />
+                <Route path="/dp1" element={<DataProcessor1/>}/>
+                <Route path="/dp2" element={<DataProcessor2/>}/>
               </Routes>
             </div>
           </div>
