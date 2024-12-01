@@ -6,6 +6,8 @@ import { AuthenticationDetails, CognitoUser } from "amazon-cognito-identity-js";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import hashAnswer from "../../utility/Hashing";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../utility/firebase";
 
 const questions = [
 	{ question: "What is your mother's maiden name?", answer: "" },
@@ -30,6 +32,10 @@ export default function Login() {
 	const ValidateAnswerLambdaUrl =
 		process.env.REACT_APP_LAMBDA_VERIFY_SECURITY_ANSWER ||
 		"https://mpbwkakggrqs3473fowzamfwhm0otuct.lambda-url.us-east-1.on.aws/";
+
+	const SNSNotificationLambdaUrl =
+		process.env.REACT_APP_LAMBDA_SNS_NOTIFICATION ||
+		"https://lfgb5dgzov6unjdy3wawma72pa0ukmhi.lambda-url.us-east-1.on.aws/";
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -91,10 +97,49 @@ export default function Login() {
 			if (parseInt(userMathAnswer) === mathAnswer) {
 				setSuccessMessage("Login successful!");
 				login(tempToken);
-				navigate("/dashboard");
+				await storeLoginLogs(email);
+				await triggerSNSNotification(email);
+				navigate("/home");
 			} else {
 				setError("Math question answer is incorrect. Please try again.");
 			}
+		}
+	};
+
+	const triggerSNSNotification = async (email) => {
+		try {
+			const response = await axios.post(SNSNotificationLambdaUrl, {
+				email: email,
+				eventType: "Login",
+			});
+
+			if (response.status === 200 && response.data.matched === true) {
+				setSuccessMessage(
+					"Successfully sent a SNS Notification on User Login."
+				);
+			}
+		} catch (err) {
+			setError("Error sending a SNS Notification on user login action.");
+		}
+	};
+	const storeLoginLogs = async (email) => {
+		const now = new Date();
+		const loginDetails = {
+			email,
+			day: now.getDate(),
+			month: now.getMonth() + 1,
+			year: now.getFullYear(),
+			timestamp: now.toISOString(),
+		};
+
+		try {
+			await setDoc(
+				doc(db, "login_logs", `${email}-${now.getTime()}`),
+				loginDetails
+			);
+			console.log("Login details stored successfully.");
+		} catch (error) {
+			console.error("Error storing login details: ", error);
 		}
 	};
 

@@ -19,8 +19,8 @@ export default function Dashboard() {
 
 	return (
 		<>
-			<h1>Dashboard</h1>
-			<h2>Welcome, {name}!</h2>
+			<h1>Admin Dashboard</h1>
+			<h2>Welcome, Admin {name}!</h2>
 		</>
 	);
 }
