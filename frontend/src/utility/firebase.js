@@ -1,6 +1,5 @@
 // firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAiSqqPFFkqLN6A-gnlTdXg_9raR8Kqo7s",
@@ -13,6 +12,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app,"chat-data");
+export { app }
+// const db = getFirestore(app,"chat-data");
 
-export { db };
+// export { db };

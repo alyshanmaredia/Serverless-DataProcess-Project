@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, updateDoc, getDoc } from 'firebase/firestore';
 import { Avatar, Button, TextInput, Spinner } from 'flowbite-react';
 import { FaEdit, FaPaperPlane, FaHistory } from 'react-icons/fa';
-import { db } from '../../utility/firebase';
+import { db } from '../../utility/firebaseChatData';
 import axios from 'axios';
 
-import { useLocation } from "react-router-dom";
+// import { useLocation } from "react-router-dom";
 
 function AssistantChat() {
   const [sessions, setSessions] = useState([]);
@@ -20,12 +20,12 @@ function AssistantChat() {
 
   const messagesEndRef = useRef(null);
 
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const userId = queryParams.get("user");
+  // const location = useLocation();
+  // const queryParams = new URLSearchParams(location.search);
+  // const userId = queryParams.get("user");
 
   // const userId = 'QDPTest100';
-  // const userId = 'TestUser01';
+  const userId = 'TestUser01';
   const userAvatarUrl = 'https://randomuser.me/api/portraits/men/1.jpg';
   const botAvatarUrl = 'https://img.icons8.com/?size=100&id=uZrQP6cYos2I&format=png&color=000000';
   const agentAvatarUrl = 'https://img.icons8.com/?size=100&id=84771&format=png';
@@ -102,7 +102,7 @@ function AssistantChat() {
   useEffect(() => scrollToBottom(), [messages]);
 
   const handleNewChat = () => {
-    setSelectedSessionId(Date.now().toString());
+    // setSelectedSessionId(Date.now().toString());
     setMessages([]);
     setNewMessage('');
   };
@@ -161,6 +161,21 @@ function AssistantChat() {
     }
   };
 
+  const closeChat = async () => {
+    try {
+      const sessionRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
+      const sessionDocRef = doc(sessionRef, selectedSessionId);
+      const docSnap = await getDoc(sessionDocRef);
+      if (!docSnap.exists()) {
+        throw new Error(`No session document found with ID: ${selectedSessionId}`);
+      }
+      await updateDoc(sessionDocRef, { status: 'closed' });
+      console.log(`Session ${selectedSessionId} status updated to closed`);
+    } catch (error) {
+      console.error("Error updating session status:", error);
+    }
+  }
+
   const handleAssistantResponse = async (message) => {
     if (message === forwardPhrase) {
       const resData = await sendMessageToAPI('qdp-forward', { session_id: selectedSessionId, user_id: userId });
@@ -173,7 +188,7 @@ function AssistantChat() {
       console.log("selectedSessionId: ", selectedSessionId);
       console.log("selectedSessionId: ", getCurrentSession());
       let participants = selectedChat?.participants;
-      if(participants?.length == 1) {
+      if(participants?.length === 1) {
         participants = [participants[0], qdpAgentId];
         setSelectedChat({...selectedChat, participants: participants});
       }
@@ -194,7 +209,7 @@ function AssistantChat() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-68px)]">
+    <div className="flex h-[calc(100vh-76px)]">
       <div className="w-64 border border-gray-200 p-4">
         <h1 className="flex items-center justify-center space-x-2 w-full bg-blue-100 text-blue-800 text-md font-medium me-2 px-3 py-4 rounded dark:bg-blue-900 dark:text-blue-300">
           <FaHistory className="text-xl" /> 
@@ -216,9 +231,14 @@ function AssistantChat() {
       <div className="flex flex-col h-full w-full bg-white">
         <div className="p-4 flex justify-between items-center border shadow">
           <h1 className="text-2xl font-semibold">{userType === 'agent' ? 'Agent Dashboard' : 'QDP Virtual Assistant'}</h1>
-          <Button onClick={handleNewChat} color="dark" className="bg-black hover:bg-gray-800">
-            <FaEdit className="mr-2" /> Start New Chat
-          </Button>
+          <div className='flex gap-2'>
+            <Button onClick={handleNewChat} color="dark" className="bg-black hover:bg-gray-800">
+              <FaEdit className="mr-2" /> Start New Chat
+            </Button>
+            {selectedSessionId && (<Button onClick={closeChat} className="bg-red-500 hover:bg-gray-800">
+              Close Chat
+            </Button>)}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -243,7 +263,8 @@ function AssistantChat() {
           )}
         </div>
 
-        {selectedSessionId && (
+        {getCurrentSession() && (getCurrentSession()?.status === 'closed') && (<h2 className="p-4 flex items-center text-center border-t bg-white">This chat is Closed</h2>)}
+        {selectedSessionId && (getCurrentSession()?.status !== 'closed') && (
           <form onSubmit={handleSendMessage} className="p-4 flex items-center border-t bg-white">
             <TextInput
               placeholder="Type your message..."

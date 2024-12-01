@@ -7,7 +7,7 @@ import { LOGIN } from "../../utility/Constants";
 import axios from "axios";
 import hashAnswer from "../../utility/Hashing";
 import { doc, setDoc } from "firebase/firestore";
-import { db } from "../../utility/firebase";
+import { db } from "../../utility/firebaseDefault";
 
 export default function Registration() {
 	const [fullName, setFullName] = useState("");

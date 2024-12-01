@@ -7,7 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import hashAnswer from "../../utility/Hashing";
 import { doc, setDoc } from "firebase/firestore";
-import { db } from "../../utility/firebase";
+import { db } from "../../utility/firebaseDefault";
 
 const questions = [
 	{ question: "What is your mother's maiden name?", answer: "" },

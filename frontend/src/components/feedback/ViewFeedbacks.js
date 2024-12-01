@@ -25,13 +25,13 @@ const FeedbackCards = () => {
     }
 
     return (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto pt-4 px-16">
             <h1 className="text-2xl font-semibold mb-4">Feedbacks</h1>
 
             {/* Feedback Cards Container */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="flex flex-col space-y-4 overflow-y-auto pr-4 h-[calc(100vh-148px)]">
                 {feedbacks.length === 0 ? (
-                    <div className="text-center text-lg text-gray-500 col-span-4">No feedbacks available</div>
+                    <div className="text-center text-lg text-gray-500">No feedbacks available</div>
                 ) : (
                     feedbacks.map((feedback, index) => {
                         // Safely convert the score to a number and default to 0 if not valid
@@ -52,20 +52,22 @@ const FeedbackCards = () => {
                             <a
                                 key={index}
                                 href="#"
-                                className={`block p-6 border border-gray-200 rounded-lg shadow ${classificationColor} 
+                                className={`flex items-start p-4 border border-gray-200 rounded-lg shadow ${classificationColor} 
     hover:opacity-80 hover:text-black transition duration-300`}>
-                                <h5 className="mb-2 text-2xl font-bold text-white">{feedback.title || 'No Title'}</h5>
-                                <p className="font-normal text-white mb-4">{feedback.feedback || 'No Feedback'}</p>
-                                <div className="text-white mb-2">
-                                    <span className="font-semibold">Reviewer :  </span>
-                                    {feedback.reviewer || 'Anonymous'}
+                                <div className="flex-1">
+                                    <h5 className="mb-2 text-xl font-bold text-white">{feedback.title || 'No Title'}</h5>
+                                    <p className="font-normal text-white mb-4">{feedback.feedback || 'No Feedback'}</p>
+                                    <div className="text-white mb-2">
+                                        <span className="font-semibold">Reviewer :  </span>
+                                        {feedback.reviewer || 'Anonymous'}
+                                    </div>
+                                    <div className="text-white mb-2">
+                                        <span className="font-semibold">Score :  </span>
+                                        {scoreFormatted}
+                                    </div>
+                                    {/* Plain text for classification */}
+                                    <div className="text-white text-lg font-semibold">{feedback.classification || 'Neutral'}</div>
                                 </div>
-                                <div className="text-white mb-2">
-                                    <span className="font-semibold">Score :  </span>
-                                    {scoreFormatted}
-                                </div>
-                                {/* Plain text for classification */}
-                                <div className="text-white text-lg font-semibold">{feedback.classification || 'Neutral'}</div>
                             </a>
                         );
                     })

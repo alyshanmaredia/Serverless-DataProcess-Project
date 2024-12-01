@@ -44,7 +44,7 @@ const FeedbackForm = () => {
     };
 
     return (
-        <div className="flex items-center justify-center bg-gray-100 p-4">
+        <div className="flex items-center justify-center bg-gray-100 h-[calc(100vh-76px)]">
             <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg flex flex-col">
                 <h3 className="text-2xl font-semibold text-center mb-6">Submit Feedback</h3>
                 <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
