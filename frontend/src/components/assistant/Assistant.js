@@ -3,7 +3,9 @@ import { collection, doc, onSnapshot, query, orderBy, updateDoc, getDoc } from '
 import { Avatar, Button, TextInput, Spinner } from 'flowbite-react';
 import { FaEdit, FaPaperPlane, FaHistory } from 'react-icons/fa';
 import { db } from '../../utility/firebaseChatData';
+import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
+import Cookies from "js-cookie";
 
 // import { useLocation } from "react-router-dom";
 
@@ -17,6 +19,7 @@ function AssistantChat() {
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [userType, setUserType] = useState('user');
+  const [userId, setUserId] = useState('guest');
 
   const messagesEndRef = useRef(null);
 
@@ -25,29 +28,44 @@ function AssistantChat() {
   // const userId = queryParams.get("user");
 
   // const userId = 'QDPTest100';
-  const userId = 'TestUser01';
+  // const userId = 'TestUser01';
   const userAvatarUrl = 'https://randomuser.me/api/portraits/men/1.jpg';
   const botAvatarUrl = 'https://img.icons8.com/?size=100&id=uZrQP6cYos2I&format=png&color=000000';
   const agentAvatarUrl = 'https://img.icons8.com/?size=100&id=84771&format=png';
 
   const API_BASE_URL = 'https://us-central1-serverless-439419.cloudfunctions.net';
-  const redirectPhrase = "Do you want me to take you to the";
+  const redirectPhrase = "Taking you to the";
   const forwardPhrase = "Forwarding to a QDP agent...";
 
   // Utility: Fetch user sessions
   const fetchSessions = () => {
-    const sessionsRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
-    return onSnapshot(sessionsRef, (snapshot) => {
-      setSessions(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    });
+    console.log("User:", userId)
+    if(userId && userId !== "guest") {
+      const sessionsRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
+      return onSnapshot(sessionsRef, (snapshot) => {
+        setSessions(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      });
+    } else {
+      setSessions([{
+        id: 'default',
+        created_at: new Date().toISOString(),
+        participants: ['guest'],
+        status: "active"
+      }]);
+      setSelectedSessionId('default');
+      const currSession = sessions.find(s => s.id === selectedSessionId);
+      setSelectedChat(currSession)
+      setUserType('user');
+      return null;
+    }
+    
   };
 
   // Utility: Fetch session messages
   const fetchMessages = (sessionId) => {
     const selectedSession = getCurrentSession();
     const sessionParticipants = selectedSession?.participants || [];
-
-    if (userId && sessionId) {
+    if (userId && userId !== "guest" && sessionId) {
       const uid = userType === 'agent' ? sessionParticipants.find((participant) => participant !== userId) : userId;
       const messagesRef = collection(doc(collection(db, 'chat_messages'), uid), 'sessions', sessionId, 'conversations');
       const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
@@ -64,6 +82,7 @@ function AssistantChat() {
         }
       );
     }
+    return null;
   };
 
   // Helper: Determine user type
@@ -82,17 +101,33 @@ function AssistantChat() {
     return sessions.find(s => s.id === selectedSessionId);
   }
 
-  // Effect: Load sessions
-  useEffect(() => {
-    const unsubscribe = fetchSessions();
-    return () => unsubscribe();
-  }, [userId]);
+	useEffect(() => {
+		// const token = localStorage.getItem("jwtToken");
+    const token = Cookies.get("jwtToken");
+
+		if (token) {
+			try {
+				const decoded = jwtDecode(token);
+        console.log("User token:", decoded);
+				setUserId(decoded["email"] || "guest");
+			} catch (error) {
+				console.error("Invalid token", error);
+			}
+		}
+
+    console.log(userId)
+
+    setTimeout(() => {
+      const unsubscribe = fetchSessions();
+      if(unsubscribe) return () => unsubscribe();
+    }, 2000);
+	}, []);
 
   // Effect: Load messages for selected session
   useEffect(() => {
     if (selectedSessionId) {
       const unsubscribe = fetchMessages(selectedSessionId);
-      return () => unsubscribe();
+      if(unsubscribe) return () => unsubscribe();
     } else {
       setLoading(false);
     }
@@ -102,7 +137,7 @@ function AssistantChat() {
   useEffect(() => scrollToBottom(), [messages]);
 
   const handleNewChat = () => {
-    // setSelectedSessionId(Date.now().toString());
+    setSelectedSessionId(Date.now().toString());
     setMessages([]);
     setNewMessage('');
   };
@@ -135,11 +170,35 @@ function AssistantChat() {
           sender: userType
         });
       } else {
+        if(userId === 'guest') {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              id: new Date().toISOString(),
+              message: newMessage,
+              sender: "user",
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          console.log(messages);
+        }
         const response = await sendMessageToAPI('assistant-chat-handler', {
           text: newMessage,
           session_id: selectedSessionId,
           user_id: userId,
         });
+        if(userId === 'guest') {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              id: response.timestamp,
+              message: response.message,
+              sender: response.sender,
+              timestamp: response.timestamp,
+            },
+          ]);
+          console.log(messages);
+        }
         await handleAssistantResponse(response.message);
       }
     } finally {
@@ -162,40 +221,61 @@ function AssistantChat() {
   };
 
   const closeChat = async () => {
-    try {
-      const sessionRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
-      const sessionDocRef = doc(sessionRef, selectedSessionId);
-      const docSnap = await getDoc(sessionDocRef);
-      if (!docSnap.exists()) {
-        throw new Error(`No session document found with ID: ${selectedSessionId}`);
+    const response = await axios.post('https://fob6n3b5g3eli5guvw5jflgvtq0jbneo.lambda-url.us-east-1.on.aws/', {email: userId}, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if(response.status == 200) {
+      try {
+        const sessionRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
+        const sessionDocRef = doc(sessionRef, selectedSessionId);
+        const docSnap = await getDoc(sessionDocRef);
+        if (!docSnap.exists()) {
+          throw new Error(`No session document found with ID: ${selectedSessionId}`);
+        }
+        await updateDoc(sessionDocRef, { status: 'closed' });
+        console.log(`Session ${selectedSessionId} status updated to closed`);
+      } catch (error) {
+        console.error("Error updating session status:", error);
       }
-      await updateDoc(sessionDocRef, { status: 'closed' });
-      console.log(`Session ${selectedSessionId} status updated to closed`);
-    } catch (error) {
-      console.error("Error updating session status:", error);
     }
   }
 
   const handleAssistantResponse = async (message) => {
-    if (message === forwardPhrase) {
-      const resData = await sendMessageToAPI('qdp-forward', { session_id: selectedSessionId, user_id: userId });
-      const qdpAgentId = resData.agent_id;
-      fetchSessions();
-      fetchMessages();
-      setSelectedChat(sessions.find(s => s.id === selectedSessionId));
-      console.log("resData: ", resData);
-      console.log("qdpAgentId: ", qdpAgentId);
-      console.log("selectedSessionId: ", selectedSessionId);
-      console.log("selectedSessionId: ", getCurrentSession());
-      let participants = selectedChat?.participants;
-      if(participants?.length === 1) {
-        participants = [participants[0], qdpAgentId];
-        setSelectedChat({...selectedChat, participants: participants});
+    if (message === forwardPhrase && userId !== 'guest') {
+      try {
+        const resData = await sendMessageToAPI('qdp-forward', { session_id: selectedSessionId, user_id: userId });
+  
+        // Handle successful response
+        const qdpAgentId = resData.agent_id;
+        fetchSessions();
+        fetchMessages();
+        setSelectedChat(sessions.find(s => s.id === selectedSessionId));
+        console.log("resData: ", resData);
+        console.log("qdpAgentId: ", qdpAgentId);
+        console.log("selectedSessionId: ", selectedSessionId);
+        console.log("selectedSessionId: ", getCurrentSession());
+  
+        let participants = selectedChat?.participants;
+        if (participants?.length === 1) {
+          participants = [participants[0], qdpAgentId];
+          setSelectedChat({ ...selectedChat, participants: participants });
+        }
+        console.log("selectedChat: ", selectedChat);
+      } catch (error) {
+        // Handle errors
+        console.error("Error while assigning QDP Agent:", error);
+  
+        // Check for HTTP 500 status
+        if (error.response && error.response.status === 500) {
+          alert("Failed to assign QDP Agent. Please try again later.");
+        } else {
+          alert("An unexpected error occurred.");
+        }
       }
-      console.log("selectedChat: ",selectedChat)
     } else if (message.includes(redirectPhrase)) {
-      const keyword = message.split(redirectPhrase).pop().split(/[.\n?]/)[0].trim();
-      const routes = { 'login/registration page': '/login', 'dashboard page': '/dashboard', 'home page': '/home' };
+      const keyword = message.split("Taking you to the ")[1]?.split("...")[0];
+  
+      const routes = { 'login': '/login', 'dashboard': '/dashboard', 'home': '/home' };
       if (routes[keyword.toLowerCase()]) window.open(routes[keyword.toLowerCase()], '_blank');
     }
   };
@@ -210,7 +290,7 @@ function AssistantChat() {
 
   return (
     <div className="flex h-[calc(100vh-76px)]">
-      <div className="w-64 border border-gray-200 p-4">
+      {(userId !== "guest") && (<div className="w-64 border border-gray-200 p-4">
         <h1 className="flex items-center justify-center space-x-2 w-full bg-blue-100 text-blue-800 text-md font-medium me-2 px-3 py-4 rounded dark:bg-blue-900 dark:text-blue-300">
           <FaHistory className="text-xl" /> 
           <span>Chat History</span>
@@ -227,18 +307,18 @@ function AssistantChat() {
             </li>
           ))}
         </ul>
-      </div>
+      </div>)}
       <div className="flex flex-col h-full w-full bg-white">
         <div className="p-4 flex justify-between items-center border shadow">
           <h1 className="text-2xl font-semibold">{userType === 'agent' ? 'Agent Dashboard' : 'QDP Virtual Assistant'}</h1>
-          <div className='flex gap-2'>
+          {(userId !== "guest") && (<div className='flex gap-2'>
             <Button onClick={handleNewChat} color="dark" className="bg-black hover:bg-gray-800">
               <FaEdit className="mr-2" /> Start New Chat
             </Button>
             {selectedSessionId && (<Button onClick={closeChat} className="bg-red-500 hover:bg-gray-800">
               Close Chat
             </Button>)}
-          </div>
+          </div>)}
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">

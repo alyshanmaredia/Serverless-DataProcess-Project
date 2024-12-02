@@ -1,6 +1,6 @@
 export async function getResults(req, res) {
     try {
-         const userMessage = req.body.text;
+        // const userMessage = req.body.text;
         // const referanceCode = req.body.intentInfo.parameters.referance_code.resolvedValue;
         const referanceCode = req.body.intentInfo.parameters.referance_code.originalValue;
         const responseMessage = "Testing file processing results for referance code: "+referanceCode;

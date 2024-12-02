@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
+import Cookies from "js-cookie";
 
 export default function Home() {
 	const [name, setName] = useState("Guest");
 
 	useEffect(() => {
-		const token = localStorage.getItem("jwtToken");
+		// const token = localStorage.getItem("jwtToken");
+		const token = Cookies.get("jwtToken");
 
 		if (token) {
 			try {

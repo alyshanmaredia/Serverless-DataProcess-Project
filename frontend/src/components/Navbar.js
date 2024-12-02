@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const Navbar = ({ toggleSidebar }) => {
   const location = useLocation();
@@ -13,7 +14,8 @@ const Navbar = ({ toggleSidebar }) => {
   const { isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
+    // const token = localStorage.getItem("jwtToken");
+    const token = Cookies.get("jwtToken");
     if (token) {
       try {
         const decoded = jwtDecode(token);
