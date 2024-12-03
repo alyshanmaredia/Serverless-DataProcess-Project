@@ -5,6 +5,7 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
+import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from "./context/AuthContext";
 import Login from "../src/components/authentication/Login";
 import Registeration from "../src/components/authentication/Registeration";
@@ -18,6 +19,7 @@ import FeedbackForm from "./components/feedback/FeedbackForm";
 import FeedbackTable from "./components/feedback/ViewFeedbacks";
 import DataProcessor1 from "./components/dataProcessors/DataProcessor1";
 import DataProcessor2 from "./components/dataProcessors/DataProcessor2";
+import DataProcessor3 from "./components/dataProcessors/DataProcessor3";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -57,8 +59,9 @@ const App = () => {
                   path="/dashboard"
                   element={<ProtectedRoute element={<Dashboard />} />}
                 />
-                <Route path="/dp1" element={<DataProcessor1/>}/>
-                <Route path="/dp2" element={<DataProcessor2/>}/>
+                <Route path="/jsonToCsv" element={<DataProcessor1/>}/>
+                <Route path="/ner" element={<DataProcessor2/>}/>
+                <Route path="/wordCloud" element={<DataProcessor3/>}/>
               </Routes>
             </div>
           </div>

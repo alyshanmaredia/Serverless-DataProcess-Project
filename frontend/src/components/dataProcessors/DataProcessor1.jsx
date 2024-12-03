@@ -1,14 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Spinner, Table } from 'flowbite-react';
 import { FaUpload } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import { toast, ToastContainer } from 'react-toastify';
+import { jwtDecode } from 'jwt-decode';
 
 function DataProcessor1() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
+  const { isAuthenticated } = useAuth();
+  const [userEmail, setUserEmail] = useState(null);
 
-  const userEmail = 'dev01.01cre@gmail.com';
+  useEffect(() => {
+    async function fetchData() {
+      const token = localStorage.getItem("jwtToken");
+      if (token) {
+        try {
+          const decoded = await jwtDecode(token);
+          setUserEmail(decoded?.email || null);
+          console.log("Decoded Token:", decoded.email);
+        } catch (error) {
+          console.error("Invalid token", error);
+        }
+      }
+      fetchResults();
+    }
+
+    fetchData();
+
+  }, []);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -20,15 +42,24 @@ function DataProcessor1() {
       return;
     }
 
+    if (!isAuthenticated) {
+      const storedProcessIDs = JSON.parse(localStorage.getItem('processIDs') || '[]');
+      console.log(storedProcessIDs)
+      if (storedProcessIDs.length >= 2) {
+        toast.error("You have exhausted your attempts. Log in for more attempts and to view results.");
+        return;
+      }
+    }
+
     setUploading(true);
     setError(null);
 
     try {
-
       const fileName = `uploads/data_processing1/${Date.now()}_${file.name}`;
 
+      // Step 1: Get Pre-Signed URL
       const preSignedResponse = await fetch(
-        'https://azji0lr67h.execute-api.us-east-1.amazonaws.com/dev/getPresignedUrl', 
+        'https://pg70ny2xv0.execute-api.us-east-1.amazonaws.com/dev/presignedUrl',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -44,7 +75,7 @@ function DataProcessor1() {
       }
 
       const responseBody = await preSignedResponse.json();
-      const uploadUrl = JSON.parse(responseBody.body).url;
+      const uploadUrl = responseBody.url;
 
       // Step 2: Upload file to S3
       await fetch(uploadUrl, {
@@ -55,16 +86,16 @@ function DataProcessor1() {
 
       console.log('File uploaded to S3 successfully.');
 
-
+      // Step 3: Notify Backend
       const backendResponse = await fetch(
-        'https://azji0lr67h.execute-api.us-east-1.amazonaws.com/dev/processData', 
+        'https://pg70ny2xv0.execute-api.us-east-1.amazonaws.com/dev/triggerProcess',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             file_key: fileName,
-            choice: '1', 
-            email: userEmail,
+            choice: '1',
+            email: userEmail || 'guest',
           }),
         }
       );
@@ -73,8 +104,17 @@ function DataProcessor1() {
         throw new Error('Failed to notify backend.');
       }
 
+      const backendData = await backendResponse.json();
       console.log('Backend notified successfully.');
-      setTimeout(fetchResults, 3000);
+
+      // Store Process ID in LocalStorage if user is not logged in
+      if (!isAuthenticated) {
+        const processIDs = JSON.parse(localStorage.getItem('processIDs') || '[]');
+        processIDs.push(backendData.ProcessID);
+        localStorage.setItem('processIDs', JSON.stringify(processIDs));
+      }
+
+      if (isAuthenticated) setTimeout(fetchResults, 3000);
     } catch (err) {
       console.error('Error:', err.message);
       setError(err.message);
@@ -83,11 +123,13 @@ function DataProcessor1() {
     }
   };
 
-  // Fetch processing results
   const fetchResults = async () => {
+    console.log('in')
+    if (!userEmail) return;
+
     try {
       const response = await fetch(
-        'https://azji0lr67h.execute-api.us-east-1.amazonaws.com/dev/getReults', 
+        'https://pg70ny2xv0.execute-api.us-east-1.amazonaws.com/dev/getResults',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -107,15 +149,12 @@ function DataProcessor1() {
     }
   };
 
-  useEffect(() => {
-    fetchResults();
-  }, []);
-
   return (
     <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="p-4 flex justify-between items-center bg-gray-100 shadow-md">
         <div className="font-semibold text-2xl text-gray-900 italic">Data Processor 1</div>
         <div className="flex items-center">
+          <ToastContainer position="top-right" autoClose={3000} />
           <input
             type="file"
             accept="application/json"
@@ -151,8 +190,8 @@ function DataProcessor1() {
           <Table.Body className="divide-y">
             {results.length === 0 ? (
               <Table.Row>
-                <Table.Cell colSpan={3} className="text-center">
-                  No results available. Upload a file to start processing.
+                <Table.Cell colSpan={4} className="text-center">
+                  {isAuthenticated ? 'No results available. Upload a file to start processing.' : 'Log in to view results'}
                 </Table.Cell>
               </Table.Row>
             ) : (
@@ -161,7 +200,7 @@ function DataProcessor1() {
                   <Table.Cell>{result.ProcessID}</Table.Cell>
                   <Table.Cell>
                     <a
-                      href={`https://dataprocessorinputdal1.s3.us-east-1.amazonaws.com/${result.FileKey}`} 
+                      href={`https://dataprocessorinputdal1.s3.us-east-1.amazonaws.com/${result.FileKey}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -171,7 +210,7 @@ function DataProcessor1() {
                   </Table.Cell>
                   <Table.Cell>
                     <a
-                      href={result.ResultKey} 
+                      href={result.ResultKey}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -181,13 +220,12 @@ function DataProcessor1() {
                   </Table.Cell>
                   <Table.Cell>
                     <span
-                      className={`px-2 py-1 rounded ${
-                        result.Status === 'Completed'
-                          ? 'bg-green-200 text-green-800'
-                          : 'bg-yellow-200 text-yellow-800'
-                      }`}
+                      className={`px-2 py-1 rounded ${result.stat === 'Completed'
+                        ? 'bg-green-200 text-green-800'
+                        : 'bg-yellow-200 text-yellow-800'
+                        }`}
                     >
-                      {result.Status}
+                      {result.stat}
                     </span>
                   </Table.Cell>
                 </Table.Row>
