@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Button, Spinner, Table } from "flowbite-react";
 import { FaUpload } from "react-icons/fa";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 
 function DataProcessor3() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
-
-
-  const userEmail = "dev01.01cre@gmail.com"; // Replace with the logged-in user's email
+  const [userEmail, setUserEmail] = useState();
+  // Replace with the logged-in user's email
 
   // Handle file selection
   const handleFileChange = (e) => {
@@ -77,7 +78,7 @@ function DataProcessor3() {
       }
 
       console.log("Backend notified successfully.");
-      setTimeout(fetchResults, 3000);
+      setTimeout(fetchResults(userEmail), 3000);
     } catch (err) {
       console.error("Error:", err.message);
       setError(err.message);
@@ -87,14 +88,14 @@ function DataProcessor3() {
   };
 
   // Fetch processing results
-  const fetchResults = async () => {
+  const fetchResults = async (email) => {
     try {
       const response = await fetch(
         "https://pg70ny2xv0.execute-api.us-east-1.amazonaws.com/dev/getResults", // Replace with your API Gateway endpoint for fetching results
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userEmail, choice: "3" }),
+          body: JSON.stringify({ email: email, choice: "3" }),
         }
       );
 
@@ -112,7 +113,21 @@ function DataProcessor3() {
 
 
   useEffect(() => {
-    fetchResults();
+    async function fetchData() {
+      const token = Cookies.get("jwtToken");
+
+      if (token) {
+        try {
+          const decoded = await jwtDecode(token);
+          setUserEmail(decoded?.email || null);
+          console.log("Decoded Token:", decoded.email);
+          fetchResults(decoded.email);
+        } catch (error) {
+          console.error("Invalid token", error);
+        }
+      }
+    }
+    fetchData();
   }, []);
 
   return (

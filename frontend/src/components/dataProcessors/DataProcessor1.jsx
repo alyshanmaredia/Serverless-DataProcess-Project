@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { TextInput, Button, Spinner, Table } from 'flowbite-react';
+import { Button, Spinner, Table } from 'flowbite-react';
 import { FaUpload } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import Cookies from "js-cookie";
 
 function DataProcessor1() {
   const [file, setFile] = useState(null);
@@ -15,17 +16,12 @@ function DataProcessor1() {
 
   useEffect(() => {
     async function fetchData() {
-      const token = localStorage.getItem("jwtToken");
-      if (token) {
-        try {
-          const decoded = await jwtDecode(token);
-          setUserEmail(decoded?.email || null);
-          console.log("Decoded Token:", decoded.email);
-        } catch (error) {
-          console.error("Invalid token", error);
-        }
-      }
-      fetchResults();
+      const token = Cookies.get("jwtToken");
+      const decoded = await jwtDecode(token);
+      setUserEmail(decoded?.email || null);
+      console.log("Decoded Token:", decoded.email);
+      fetchResults(decoded.email );
+
     }
 
     fetchData();
@@ -114,7 +110,7 @@ function DataProcessor1() {
         localStorage.setItem('processIDs', JSON.stringify(processIDs));
       }
 
-      if (isAuthenticated) setTimeout(fetchResults, 3000);
+      if (isAuthenticated) setTimeout(fetchResults(userEmail), 3000);
     } catch (err) {
       console.error('Error:', err.message);
       setError(err.message);
@@ -123,9 +119,8 @@ function DataProcessor1() {
     }
   };
 
-  const fetchResults = async () => {
-    console.log('in')
-    if (!userEmail) return;
+  const fetchResults = async (email) => {
+
 
     try {
       const response = await fetch(
@@ -133,7 +128,7 @@ function DataProcessor1() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, choice: '1' }),
+          body: JSON.stringify({ email: email, choice: '1' }),
         }
       );
 

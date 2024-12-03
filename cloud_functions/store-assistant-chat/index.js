@@ -22,7 +22,6 @@ export async function saveChat(req, res) {
     const sessionDoc = await chatRef.get();
 
     if (!sessionDoc.exists) {
-      // Create new session if it doesn't exist
       await chatRef.set({
         created_at: timestamp || new Date().toISOString(),
         status: "active",
@@ -36,7 +35,7 @@ export async function saveChat(req, res) {
       message: conversation_message,
       timestamp: timestamp || new Date().toISOString()
     }
-    // Add conversation message to the conversations collection within this session
+
     await chatRef.collection('conversations').doc(conversationId).set(newMessage);
     
     res.json(newMessage);

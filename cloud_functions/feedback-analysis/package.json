@@ -1,0 +1,8 @@
+{
+    "dependencies": {
+      "firebase-admin": "^11.0.0",
+      "@google-cloud/functions-framework": "^3.0.0",
+      "cors": "^2.8.5",
+      "@google-cloud/language": "^4.0.0"
+    }
+  }

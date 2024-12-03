@@ -1,4 +1,6 @@
 import { Firestore } from '@google-cloud/firestore';
+import axios from 'axios';
+
 const projectId = process.env.PROJECT_ID;
 const databaseId = process.env.DATABASE_ID;
 const firestore = new Firestore({
@@ -24,7 +26,6 @@ export async function assginQDPAgent(req, res) {
   try {
     const sessionRef = firestore.collection('chat_messages').doc(user_id).collection('sessions').doc(session_id);
 
-    // Check if session exists
     const sessionDoc = await sessionRef.get();
     if (!sessionDoc.exists) {
       return res.status(404).send('Session not found');
@@ -32,29 +33,36 @@ export async function assginQDPAgent(req, res) {
 
     const sessionData = sessionDoc.data();
     
-    // Ensure sessionData.participants exists
     const participants = sessionData.participants || [];
-    const QDP_AGENT_ID = "QDPTest100";
+    let QDP_AGENT_ID;
 
-    // Update session status and assign agent
+    try {
+      const agentResponse = await axios.get('https://cflwibhoyxm24hzenxokundc340lvefo.lambda-url.us-east-1.on.aws/');
+      QDP_AGENT_ID = agentResponse.data?.email;
+      if (!QDP_AGENT_ID) {
+        throw new Error('Agent ID not found in response');
+      }
+    } catch (axiosError) {
+      console.error('Error fetching QDP agent:', axiosError.message);
+      return res.status(500).send('Failed to fetch QDP agent. Please try again later.');
+    }
+
     const updatedParticipants = Array.from(new Set([...participants, QDP_AGENT_ID]));
     await sessionRef.update({
       status: "active-qdp",
       participants: updatedParticipants,
     });
 
-    // Create or update QDP agent session
     const qdpSessionRef = firestore.collection('chat_messages').doc(QDP_AGENT_ID).collection('sessions').doc(session_id);
     const qdpSessionDoc = await qdpSessionRef.get();
     if (!qdpSessionDoc.exists) {
       await qdpSessionRef.set({
         status: sessionData.status,
-        participants: updatedParticipants, // Ensure updated participants are added here
+        participants: updatedParticipants,
       });
     }
 
-    // Log agent assignment in conversations
-    const conversationId = sessionRef.collection('conversations').doc().id; // Remove duplicate declaration
+    const conversationId = sessionRef.collection('conversations').doc().id;
     const newMessage = {
       sender: "agent",
       message: `QDP Agent [${QDP_AGENT_ID}] has joined the session.`,

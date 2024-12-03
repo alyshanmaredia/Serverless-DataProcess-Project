@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Spinner, Table, Modal } from 'flowbite-react';
 import { FaUpload } from 'react-icons/fa';
+import Cookies from "js-cookie";
+import { jwtDecode } from 'jwt-decode';
 
 function DataProcessor2() {
   const [file, setFile] = useState(null);
@@ -9,8 +11,7 @@ function DataProcessor2() {
   const [error, setError] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
-
-  const userEmail = 'dev01.01cre@gmail.com'; // Replace with the logged-in user's email
+  const [userEmail, setUserEmail] = useState();
 
   // Handle file selection
   const handleFileChange = (e) => {
@@ -79,7 +80,7 @@ function DataProcessor2() {
       }
 
       console.log('Backend notified successfully.');
-      setTimeout(fetchResults, 3000);
+      setTimeout(fetchResults(userEmail), 3000);
     } catch (err) {
       console.error('Error:', err.message);
       setError(err.message);
@@ -89,14 +90,14 @@ function DataProcessor2() {
   };
 
   // Fetch processing results
-  const fetchResults = async () => {
+  const fetchResults = async (email) => {
     try {
       const response = await fetch(
         'https://pg70ny2xv0.execute-api.us-east-1.amazonaws.com/dev/getResults', // Replace with your API Gateway endpoint for fetching results
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, choice: '2' }),
+          body: JSON.stringify({ email: email, choice: '2' }),
         }
       );
 
@@ -118,14 +119,17 @@ function DataProcessor2() {
     setModalIsOpen(true);
   };
 
-  // Close modal
-  const closeModal = () => {
-    setModalIsOpen(false);
-    setSelectedResult(null);
-  };
+
 
   useEffect(() => {
-    fetchResults();
+    async function fetchData() {
+      const token = Cookies.get("jwtToken");
+      const decoded = await jwtDecode(token);
+      setUserEmail(decoded?.email || null);
+      console.log("Decoded Token:", decoded.email);
+      fetchResults(decoded.email );
+    }
+    fetchData();
   }, []);
 
   return (

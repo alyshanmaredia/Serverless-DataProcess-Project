@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Route,
-  Routes,
-  Navigate,
+  Routes
 } from "react-router-dom";
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from "./context/AuthContext";
@@ -13,7 +12,10 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import Home from "./components/Home";
+import ProtectedRouteAgent from "./utility/AgentRouteProtection";
+import ProtectedRouteUser from "./utility/UserRouteProtection";
 import ProtectedRoute from "./utility/RouteProtection";
+import HomeRoute from "./utility/HomeRoute";
 import Assistant from "./components/assistant/Assistant";
 import FeedbackForm from "./components/feedback/FeedbackForm";
 import FeedbackTable from "./components/feedback/ViewFeedbacks";
@@ -41,7 +43,7 @@ const App = () => {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Registeration />} />
-                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path="/" element={<HomeRoute element={<Home />} />} />
                 <Route path="/assistant" element={<Assistant />} />
                 <Route
                   path="/home"
@@ -49,7 +51,7 @@ const App = () => {
                 />
                 <Route 
 									path="/feedback" 
-									element={<ProtectedRoute element={<FeedbackForm />} />}
+									element={<ProtectedRouteUser element={<FeedbackForm />} />}
 								/>
                 <Route 
 									path="/viewfeedbacks" 
@@ -57,7 +59,7 @@ const App = () => {
 								/>
                 <Route
                   path="/dashboard"
-                  element={<ProtectedRoute element={<Dashboard />} />}
+                  element={<ProtectedRouteAgent element={<Dashboard />} />}
                 />
                 <Route path="/jsonToCsv" element={<DataProcessor1/>}/>
                 <Route path="/ner" element={<DataProcessor2/>}/>
