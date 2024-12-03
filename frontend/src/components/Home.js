@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
 	const [name, setName] = useState("Guest");
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		const token = Cookies.get("jwtToken");
+		
 
 		if (token) {
 			try {
@@ -15,8 +18,10 @@ export default function Home() {
 			} catch (error) {
 				console.error("Invalid token", error);
 			}
+		} else {
+			navigate("/login");
 		}
-	}, []);
+	}, [navigate]);
 
 	return (
 		<div className="flex items-center justify-center h-[calc(100vh-76px)]">
