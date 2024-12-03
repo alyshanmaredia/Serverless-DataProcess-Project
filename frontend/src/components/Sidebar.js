@@ -15,6 +15,15 @@ const Sidebar = ({ isOpen }) => {
         <Link to="/home" className="block py-2 px-4 hover:bg-cyan-600">
           Home
         </Link>
+        <Link to="/jsonToCsv" className="block py-2 px-4 hover:bg-cyan-600">
+           Json To Csv
+         </Link>
+        <Link to="/ner" className="block py-2 px-4 hover:bg-cyan-600">
+           Named Entity Extraction
+         </Link>
+        <Link to="/wordCloud" className="block py-2 px-4 hover:bg-cyan-600">
+           Word Cloud
+         </Link>
         <Link to="/assistant" className="block py-2 px-4 hover:bg-cyan-600">
           Assistant
         </Link>

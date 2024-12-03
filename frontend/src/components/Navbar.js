@@ -37,12 +37,14 @@ const Navbar = ({ toggleSidebar }) => {
   return (
     <nav className="bg-cyan-600 text-white shadow-lg">
       <div className="container mx-auto flex items-center justify-between py-4 px-6">
-        {isAuthenticated && (<button
-          className="text-2xl px-4 focus:outline-none hover:bg-cyan-500 rounded"
-          onClick={toggleSidebar}
-        >
-          ☰
-        </button>)}
+        {isAuthenticated && (
+          <button
+            className="text-2xl px-4 focus:outline-none hover:bg-cyan-500 rounded"
+            onClick={toggleSidebar}
+          >
+            ☰
+          </button>
+        )}
         <a
           href="/"
           className="text-3xl font-bold tracking-wide hover:opacity-90 transition duration-300"
@@ -51,6 +53,14 @@ const Navbar = ({ toggleSidebar }) => {
         </a>
 
         <div className="hidden md:flex items-center space-x-6 text-lg">
+          {!isAuthenticated && (
+            <Link
+              to="/jsonToCsv"
+              className="text-white hover:text-gray-200 transition duration-300"
+            >
+              JSON to CSV
+            </Link>
+          )}
           {isAuthenticated ? (
             <div className="relative">
               <button

@@ -14,6 +14,7 @@ export default function Home() {
 		if (token) {
 			try {
 				const decoded = jwtDecode(token);
+				console.log(decoded)
 				setName(decoded["custom:fullname"] || "Guest");
 			} catch (error) {
 				console.error("Invalid token", error);

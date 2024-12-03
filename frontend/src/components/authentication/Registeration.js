@@ -179,6 +179,39 @@ export default function Registration() {
 		}
 	};
 
+	const sendProcessIDsAndResults = async (email) => {
+		try {
+		  const processIDs = JSON.parse(localStorage.getItem('processIDs') || '[]');
+	  
+		  if (processIDs.length === 0) {
+			console.warn('No Process IDs or results available to send.');
+			return;
+		  }
+	  
+		  const payload = {
+			email,
+			processIDs
+		  };
+	  
+		  const response = await axios.post(
+			'https://your-api-endpoint.com/sendProcessData', // Replace with your actual API endpoint
+			payload
+		  );
+	  
+		  if (response.status === 200) {
+			console.log('Process IDs and results sent successfully.');
+	  
+			// Clear process IDs and results from localStorage
+			localStorage.removeItem('processIDs');
+		  } else {
+			console.error('Failed to send Process IDs and results.');
+		  }
+		} catch (error) {
+		  console.error('Error sending Process IDs and results:', error.message);
+		}
+	  };
+	  
+
 	return (
 		<Card className='max-w-md mx-auto mt-6 p-6'>
 			<form
