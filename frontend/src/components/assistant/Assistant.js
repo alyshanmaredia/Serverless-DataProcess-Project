@@ -284,6 +284,8 @@ function AssistantChat() {
   
       const routes = { 'login': '/login', 'dashboard': '/dashboard', 'home': '/home' };
       if (routes[keyword.toLowerCase()]) window.open(routes[keyword.toLowerCase()], '_blank');
+    } else if (message.includes("https://")) {
+      window.open(message, '_blank');
     }
   };
 
