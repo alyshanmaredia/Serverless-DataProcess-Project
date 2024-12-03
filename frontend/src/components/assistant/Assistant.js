@@ -19,16 +19,16 @@ function AssistantChat() {
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [userType, setUserType] = useState('user');
-  const [userId, setUserId] = useState('guest');
+  // const [userId, setUserId] = useState('guest');
 
   const messagesEndRef = useRef(null);
 
   // const location = useLocation();
   // const queryParams = new URLSearchParams(location.search);
-  // const userId = queryParams.get("user");
+  // const getUserId() = queryParams.get("user");
 
-  // const userId = 'QDPTest100';
-  // const userId = 'TestUser01';
+  // const getUserId() = 'QDPTest100';
+  // const getUserId() = 'TestUser01';
   const userAvatarUrl = 'https://randomuser.me/api/portraits/men/1.jpg';
   const botAvatarUrl = 'https://img.icons8.com/?size=100&id=uZrQP6cYos2I&format=png&color=000000';
   const agentAvatarUrl = 'https://img.icons8.com/?size=100&id=84771&format=png';
@@ -39,25 +39,31 @@ function AssistantChat() {
 
   // Utility: Fetch user sessions
   const fetchSessions = () => {
-    console.log("User:", userId)
-    if(userId && userId !== "guest") {
-      const sessionsRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
+    console.log("User:", getUserId())
+    if(getUserId()) {
+      const sessionsRef = collection(doc(collection(db, 'chat_messages'), getUserId()), 'sessions');
       return onSnapshot(sessionsRef, (snapshot) => {
         setSessions(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       });
-    } else {
-      setSessions([{
-        id: 'default',
-        created_at: new Date().toISOString(),
-        participants: ['guest'],
-        status: "active"
-      }]);
-      setSelectedSessionId('default');
-      const currSession = sessions.find(s => s.id === selectedSessionId);
-      setSelectedChat(currSession)
-      setUserType('user');
-      return null;
     }
+    // if(getUserId() && getUserId() !== "guest") {
+    //   const sessionsRef = collection(doc(collection(db, 'chat_messages'), getUserId()), 'sessions');
+    //   return onSnapshot(sessionsRef, (snapshot) => {
+    //     setSessions(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    //   });
+    // } else {
+    //   setSessions([{
+    //     id: 'default',
+    //     created_at: new Date().toISOString(),
+    //     participants: ['guest'],
+    //     status: "active"
+    //   }]);
+    //   setSelectedSessionId('default');
+    //   const currSession = sessions.find(s => s.id === selectedSessionId);
+    //   setSelectedChat(currSession)
+    //   setUserType('user');
+    //   return null;
+    // }
     
   };
 
@@ -65,8 +71,8 @@ function AssistantChat() {
   const fetchMessages = (sessionId) => {
     const selectedSession = getCurrentSession();
     const sessionParticipants = selectedSession?.participants || [];
-    if (userId && userId !== "guest" && sessionId) {
-      const uid = userType === 'agent' ? sessionParticipants.find((participant) => participant !== userId) : userId;
+    if (getUserId() && getUserId() !== "guest" && sessionId) {
+      const uid = userType === 'agent' ? sessionParticipants.find((participant) => participant !== getUserId()) : getUserId();
       const messagesRef = collection(doc(collection(db, 'chat_messages'), uid), 'sessions', sessionId, 'conversations');
       const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
       return onSnapshot(
@@ -101,20 +107,22 @@ function AssistantChat() {
     return sessions.find(s => s.id === selectedSessionId);
   }
 
-	useEffect(() => {
+  const getUserId = () => {
     const token = Cookies.get("jwtToken");
-
-		if (token) {
+    if (token) {
 			try {
 				const decoded = jwtDecode(token);
         console.log("User token:", decoded);
-				setUserId(decoded["email"] || "guest");
+				return decoded["email"] || "guest";
 			} catch (error) {
-				console.error("Invalid token", error);
+				return 'guest';
 			}
 		}
+    return 'guest';
+  }
 
-    console.log(userId)
+	useEffect(() => {
+    console.log(getUserId())
 
     setTimeout(() => {
       const unsubscribe = fetchSessions();
@@ -161,7 +169,7 @@ function AssistantChat() {
     console.log(selectedSession?.participants)
     try {
       if (selectedSession?.participants?.length > 1 || userType === "agent") {
-        let uid = userType === "agent" ? selectedSession.participants.find((id) => id !== userId) : userId;
+        let uid = userType === "agent" ? selectedSession.participants.find((id) => id !== getUserId()) : getUserId();
         await sendMessageToAPI('publish-message', { 
           text: newMessage,
           session_id: selectedSessionId,
@@ -169,7 +177,7 @@ function AssistantChat() {
           sender: userType
         });
       } else {
-        if(userId === 'guest') {
+        if(getUserId() === 'guest') {
           setMessages((prevMessages) => [
             ...prevMessages,
             {
@@ -184,9 +192,9 @@ function AssistantChat() {
         const response = await sendMessageToAPI('assistant-chat-handler', {
           text: newMessage,
           session_id: selectedSessionId,
-          user_id: userId,
+          user_id: getUserId(),
         });
-        if(userId === 'guest') {
+        if(getUserId() === 'guest') {
           setMessages((prevMessages) => [
             ...prevMessages,
             {
@@ -220,12 +228,12 @@ function AssistantChat() {
   };
 
   const closeChat = async () => {
-    const response = await axios.post('https://fob6n3b5g3eli5guvw5jflgvtq0jbneo.lambda-url.us-east-1.on.aws/', {email: userId}, {
+    const response = await axios.post('https://fob6n3b5g3eli5guvw5jflgvtq0jbneo.lambda-url.us-east-1.on.aws/', {email: getUserId()}, {
       headers: { 'Content-Type': 'application/json' },
     });
     if(response.status === 200) {
       try {
-        const sessionRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
+        const sessionRef = collection(doc(collection(db, 'chat_messages'), getUserId()), 'sessions');
         const sessionDocRef = doc(sessionRef, selectedSessionId);
         const docSnap = await getDoc(sessionDocRef);
         if (!docSnap.exists()) {
@@ -240,9 +248,9 @@ function AssistantChat() {
   }
 
   const handleAssistantResponse = async (message) => {
-    if (message === forwardPhrase && userId !== 'guest') {
+    if (message === forwardPhrase && getUserId() !== 'guest') {
       try {
-        const resData = await sendMessageToAPI('qdp-forward', { session_id: selectedSessionId, user_id: userId });
+        const resData = await sendMessageToAPI('qdp-forward', { session_id: selectedSessionId, user_id: getUserId() });
   
         // Handle successful response
         const qdpAgentId = resData.agent_id;
@@ -289,8 +297,8 @@ function AssistantChat() {
 
   return (
     <div className="flex h-[calc(100vh-76px)]">
-      {(userId !== "guest") && (<div className="w-64 border border-gray-200 p-4">
-        <h1 className="flex items-center justify-center space-x-2 w-full bg-blue-100 text-blue-800 text-md font-medium me-2 px-3 py-4 rounded dark:bg-blue-900 dark:text-blue-300">
+      {(getUserId() !== "guest") && (<div className="w-64 border border-gray-200 p-4">
+        <h1 onClick={fetchSessions} className="flex items-center justify-center space-x-2 w-full bg-blue-100 text-blue-800 text-md font-medium me-2 px-3 py-4 rounded dark:bg-blue-900 dark:text-blue-300">
           <FaHistory className="text-xl" /> 
           <span>Chat History</span>
         </h1>
@@ -310,7 +318,7 @@ function AssistantChat() {
       <div className="flex flex-col h-full w-full bg-white">
         <div className="p-4 flex justify-between items-center border shadow">
           <h1 className="text-2xl font-semibold">{userType === 'agent' ? 'Agent Dashboard' : 'QDP Virtual Assistant'}</h1>
-          {(userId !== "guest") && (<div className='flex gap-2'>
+          {(getUserId() !== "guest") && (<div className='flex gap-2'>
             <Button onClick={handleNewChat} color="dark" className="bg-black hover:bg-gray-800">
               <FaEdit className="mr-2" /> Start New Chat
             </Button>
