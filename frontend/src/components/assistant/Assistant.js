@@ -102,7 +102,6 @@ function AssistantChat() {
   }
 
 	useEffect(() => {
-		// const token = localStorage.getItem("jwtToken");
     const token = Cookies.get("jwtToken");
 
 		if (token) {
@@ -224,7 +223,7 @@ function AssistantChat() {
     const response = await axios.post('https://fob6n3b5g3eli5guvw5jflgvtq0jbneo.lambda-url.us-east-1.on.aws/', {email: userId}, {
       headers: { 'Content-Type': 'application/json' },
     });
-    if(response.status == 200) {
+    if(response.status === 200) {
       try {
         const sessionRef = collection(doc(collection(db, 'chat_messages'), userId), 'sessions');
         const sessionDocRef = doc(sessionRef, selectedSessionId);

@@ -12,6 +12,8 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import Home from "./components/Home";
+import ProtectedRouteAgent from "./utility/AgentRouteProtection";
+import ProtectedRouteUser from "./utility/UserRouteProtection";
 import ProtectedRoute from "./utility/RouteProtection";
 import Assistant from "./components/assistant/Assistant";
 import FeedbackForm from "./components/feedback/FeedbackForm";
@@ -37,7 +39,7 @@ const App = () => {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Registeration />} />
-                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path="/" element={<Navigate to="/home" />} />
                 <Route path="/assistant" element={<Assistant />} />
                 <Route
                   path="/home"
@@ -45,7 +47,7 @@ const App = () => {
                 />
                 <Route 
 									path="/feedback" 
-									element={<ProtectedRoute element={<FeedbackForm />} />}
+									element={<ProtectedRouteUser element={<FeedbackForm />} />}
 								/>
                 <Route 
 									path="/viewfeedbacks" 
@@ -53,7 +55,7 @@ const App = () => {
 								/>
                 <Route
                   path="/dashboard"
-                  element={<ProtectedRoute element={<Dashboard />} />}
+                  element={<ProtectedRouteAgent element={<Dashboard />} />}
                 />
               </Routes>
             </div>

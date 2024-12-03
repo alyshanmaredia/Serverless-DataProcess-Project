@@ -6,7 +6,6 @@ export default function Home() {
 	const [name, setName] = useState("Guest");
 
 	useEffect(() => {
-		// const token = localStorage.getItem("jwtToken");
 		const token = Cookies.get("jwtToken");
 
 		if (token) {
@@ -20,9 +19,11 @@ export default function Home() {
 	}, []);
 
 	return (
-		<>
-			<h1>Home Page</h1>
-			<h2>Welcome, {name}!</h2>
-		</>
+		<div className="flex items-center justify-center h-[calc(100vh-76px)]">
+			<div className="flex flex-col items-center justify-center">
+				<h1 className="text-5xl">QDP APP</h1>
+				<h2 className="text-6xl mt-12">Welcome, <b>{name}</b>!</h2>
+			</div>
+		</div>
 	);
 }

@@ -14,7 +14,6 @@ const Navbar = ({ toggleSidebar }) => {
   const { isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
-    // const token = localStorage.getItem("jwtToken");
     const token = Cookies.get("jwtToken");
     if (token) {
       try {
@@ -32,7 +31,7 @@ const Navbar = ({ toggleSidebar }) => {
   const isLoginPage = location.pathname === "/login";
 
   const goToDashboard = () => {
-    navigate("/dashboard");
+    navigate("/home");
   };
 
   return (
